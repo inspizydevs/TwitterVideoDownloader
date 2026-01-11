@@ -6,7 +6,7 @@ A lightweight Chrome extension that adds download buttons to Twitter/X videos wi
 
 - 🎥 **Multiple Quality Options** - Choose between HD, Standard, and Fast quality
 - 🚀 **One-Click Download** - Hover over button to see quality options
-- ⚡ **Automatic Detection** - Works on all video tweets automatically
+- ⚡ **Automatic Detection** - Works on all video posts automatically
 - 🎨 **Clean UI** - Beautiful, non-intrusive download button
 - 🌓 **Theme Support** - Works with both light and dark modes
 - 🔒 **Privacy First** - No data collection, all processing local
@@ -24,7 +24,7 @@ A lightweight Chrome extension that adds download buttons to Twitter/X videos wi
 ## 🎯 Usage
 
 1. Visit [twitter.com](https://twitter.com) or [x.com](https://x.com)
-2. Scroll through your timeline and find a video tweet
+2. Scroll through your timeline and find a video post
 3. Look for the blue download button on the video
 4. Hover over the button to see quality options:
    - 🚀 **HD** - Highest quality (2000+ kbps)
@@ -40,16 +40,16 @@ A lightweight Chrome extension that adds download buttons to Twitter/X videos wi
 The extension uses a safe, read-only approach to extract video URLs:
 
 1. **Injection** - Injects a script into the page context at `document_start`
-2. **Interception** - Overrides `window.fetch` and `XMLHttpRequest` to intercept Twitter's GraphQL API responses
+2. **Interception** - Overrides `window.fetch` and `XMLHttpRequest` to intercept X/Twitter's GraphQL API responses
 3. **Extraction** - Extracts video URLs with bitrate information from the API responses
-4. **UI Addition** - Adds download buttons with quality selectors to video tweets
-5. **No Modification** - All API responses are returned unchanged; Twitter functions normally
+4. **UI Addition** - Adds download buttons with quality selectors to video posts
+5. **No Modification** - All API responses are returned unchanged; X/Twitter functions normally
 
 ### Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│  Page Context (twitter.com)                             │
+│  Page Context (X.com)                             │
 │                                                          │
 │  ┌──────────────┐         ┌─────────────────┐          │
 │  │  inject.js   │ ──────> │ window.fetch()  │          │
@@ -94,7 +94,7 @@ twitter-video-downloader/
 ## 🔒 Privacy & Security
 
 ### What This Extension Does:
-✅ Reads Twitter's GraphQL API responses (read-only)
+✅ Reads X's GraphQL API responses (read-only)
 ✅ Extracts video URLs that are already public
 ✅ Runs only on Twitter/X domains
 ✅ All processing happens locally in your browser
@@ -102,8 +102,8 @@ twitter-video-downloader/
 ### What This Extension Does NOT Do:
 ❌ Does not send any data to external servers
 ❌ Does not collect or track your browsing activity
-❌ Does not modify Twitter's functionality
-❌ Does not access your Twitter credentials
+❌ Does not modify X's functionality
+❌ Does not access your X credentials
 ❌ Does not intercept private/DM content
 
 ### Security Considerations
@@ -118,17 +118,17 @@ The extension uses `window.fetch` override in page context to intercept API resp
 ## 🐛 Troubleshooting
 
 ### Download button not appearing?
-- Refresh the page (Twitter is a single-page app)
+- Refresh the page (X is a single-page app)
 - Make sure the extension is enabled in `chrome://extensions/`
-- Check if the video is a native Twitter video (not YouTube embed)
+- Check if the video is a native X video (not YouTube embed)
 
 ### Videos not opening?
 - Check if your browser is blocking pop-ups
-- Try disabling other Twitter-related extensions temporarily
-- Clear browser cache and reload Twitter
+- Try disabling other X-related extensions temporarily
+- Clear browser cache and reload X
 
-### Extension not working after Twitter update?
-- Twitter frequently updates their website structure
+### Extension not working after X update?
+- X frequently updates their website structure
 - Check for extension updates or report an issue on GitHub
 
 ## 🤝 Contributing
@@ -155,10 +155,10 @@ MIT License - See [LICENSE](LICENSE) file for details
 
 ## ⚠️ Disclaimer
 
-This extension is for personal use only. Please respect content creators' rights and Twitter's Terms of Service. Always credit the original creator when sharing downloaded content.
+This extension is for personal use only. Please respect content creators' rights and X's Terms of Service. Always credit the original creator when sharing downloaded content.
 
 ---
 
-**Made with ❤️ for Twitter users**
+**Made with ❤️ for X/Twitter users**
 
 If you find this extension helpful, please give it a ⭐ on GitHub!
