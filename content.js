@@ -105,38 +105,45 @@
 
       for (const link of links) {
         if (link.href.includes(`/status/${tweetId}`)) {
-          // Found the right tweet! Now find the video container
-          const videoContainer = article.querySelector('[data-testid="videoPlayer"]');
+          // Found the right tweet! Now find the action bar (role="group") 
+          const actionGroup = article.querySelector('[role="group"]');
 
-          if (videoContainer && !videoContainer.querySelector('.twitter-video-download-btn')) {
-            // Create button container
+          if (actionGroup && !actionGroup.querySelector('.twitter-video-download-btn')) {
+            // Create a wrapper to mimic Twitter's native action item spacing
+            const itemWrapper = document.createElement('div');
+            itemWrapper.className = 'css-175oi2r twitter-video-download-btn';
+            itemWrapper.style.cssText = `
+              justify-content: inherit; 
+              display: inline-grid;
+            `;
+
+            // Create inner flex container
             const btnContainer = document.createElement('div');
-            btnContainer.className = 'twitter-video-download-btn';
-            btnContainer.style.cssText = `
-              position: absolute;
-              top: 10px;
-              right: 10px;
-              z-index: 9999;
+            btnContainer.className = 'css-175oi2r r-18u37iz r-1h0z5md';
+            
+            // Create download button using Twitter's native classes
+            const btn = document.createElement('button');
+            btn.className = 'css-175oi2r r-1777fci r-bt1l66 r-bztko3 r-lrvibr r-1loqt21 r-1ny4l3l xplay-btn';
+            btn.setAttribute('aria-label', 'Download Video');
+            btn.setAttribute('role', 'button');
+            btn.setAttribute('type', 'button');
+            
+            btn.innerHTML = `
+              <div dir="ltr" class="css-146c3p1 r-bcqeeo r-1ttztb7 r-qvutc0 r-37j5jr r-a023e6 r-rjixqe r-16dba41 r-1awozwy r-6koalj r-1h0z5md r-o7ynqc r-clp7b1 r-3s2u2q">
+                <div class="css-175oi2r r-xoduu5">
+                   <div class="css-175oi2r r-xoduu5 r-1p0dtai r-1d2f490 r-u8s1d r-zchlnj r-ipm5af r-1niwhzg r-sdzlij r-xf4iuw r-o7ynqc r-6416eg r-1ny4l3l xplay-hover-circle"></div>
+                   <svg viewBox="0 0 24 24" aria-hidden="true" class="r-4qtqp9 r-yyyyoo r-dnmrzs r-bnwqim r-lrvibr r-m6rgpd r-50lct3 r-1srniue xplay-icon">
+                      <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"></path>
+                   </svg>
+                </div>
+              </div>
             `;
 
-            // Create download button
-            const btn = document.createElement('button');
-            btn.innerHTML = `
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
-                <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
-              </svg>
-            `;
             btn.style.cssText = `
-              background: rgba(29, 155, 240, 0.9);
+              background: transparent;
               border: none;
-              border-radius: 50%;
-              width: 40px;
-              height: 40px;
-              display: flex;
-              align-items: center;
-              justify-content: center;
               cursor: pointer;
-              transition: all 0.2s;
+              outline: none;
             `;
 
             // Create dropdown menu
@@ -144,8 +151,9 @@
             dropdown.className = 'quality-dropdown';
             dropdown.style.cssText = `
               position: absolute;
-              top: 45px;
+              bottom: 40px;
               right: 0;
+              margin-right: -50px;
               background: rgba(0, 0, 0, 0.9);
               border-radius: 8px;
               padding: 8px;
@@ -154,6 +162,7 @@
               flex-direction: column;
               gap: 4px;
               box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+              z-index: 10000;
             `;
 
             // Get quality options
@@ -184,7 +193,7 @@
               option.onclick = (e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                openVideo(quality.url);
+                downloadVideo(quality.url, tweetId);
                 dropdown.style.display = 'none';
               };
 
@@ -198,25 +207,22 @@
               
               if (dropdown.style.display === 'flex') {
                 dropdown.style.display = 'none';
-                btn.style.background = 'rgba(29, 155, 240, 0.9)';
               } else {
-                // Close other dropdowns if any (optional but nice)
+                // Close other dropdowns if any
                 document.querySelectorAll('.quality-dropdown').forEach(d => d.style.display = 'none');
                 
                 dropdown.style.display = 'flex';
-                btn.style.background = 'rgba(29, 155, 240, 1)';
               }
             };
 
-            // Close dropdown when clicking outside listener removed - handled globally
-
-
+            // Assemble button structure
             btnContainer.appendChild(btn);
             btnContainer.appendChild(dropdown);
+            itemWrapper.appendChild(btnContainer);
 
-            // Add button to video container
-            videoContainer.style.position = 'relative';
-            videoContainer.appendChild(btnContainer);
+            // Add button wrapper to action group
+            itemWrapper.style.position = 'relative';
+            actionGroup.appendChild(itemWrapper);
 
             return;
           }
@@ -259,12 +265,17 @@
   }
 
   /**
-   * Open video URL in a new browser tab
-   * @param {string} url - The video URL to open
+   * Trigger direct video download
+   * @param {string} url - The video URL to download
+   * @param {string} tweetId - The tweet ID to use for filename
    */
-  function openVideo(url) {
-    window.open(url, '_blank');
-    showNotification('Video opened in new tab!');
+  function downloadVideo(url, tweetId) {
+    chrome.runtime.sendMessage({
+      action: 'downloadVideo',
+      url: url,
+      tweetId: tweetId
+    });
+    showNotification('Download started...');
   }
 
   /**
@@ -328,11 +339,6 @@
       // Hide all dropdowns
       document.querySelectorAll('.quality-dropdown').forEach(d => {
         d.style.display = 'none';
-      });
-      
-      // Reset button styles
-      document.querySelectorAll('.twitter-video-download-btn > button').forEach(btn => {
-        btn.style.background = 'rgba(29, 155, 240, 0.9)';
       });
     }
   });

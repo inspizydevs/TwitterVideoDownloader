@@ -5,7 +5,8 @@
   "description": "Download videos from Twitter/X with a simple click",
   "permissions": [
     "activeTab",
-    "storage"
+    "storage",
+    "downloads"
   ],
   "host_permissions": [
     "*://*.twitter.com/*",

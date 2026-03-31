@@ -7,3 +7,14 @@
 chrome.runtime.onInstalled.addListener(() => {
   // Extension installed successfully
 });
+
+// Listen for download requests from content script
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  if (request.action === 'downloadVideo') {
+    chrome.downloads.download({
+      url: request.url,
+      filename: `twitter-video-${request.tweetId}.mp4`,
+      saveAs: false
+    });
+  }
+});

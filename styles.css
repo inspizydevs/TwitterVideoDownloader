@@ -1,34 +1,24 @@
 /* Twitter Video Downloader Styles */
 
 .twitter-video-download-btn {
-  min-width: 32px;
-  min-height: 32px;
-  padding: 6px;
-  cursor: pointer;
-  color: white;
-  transition: all 0.2s ease;
   position: relative;
   z-index: 1001;
+  margin-left: 8px;
 }
 
-.twitter-video-download-btn:hover {
-  background-color: rgba(29, 155, 240, 0.2) !important;
+.xplay-btn {
+  transition: background-color 0.2s;
+  color: rgb(29, 155, 240) !important; /* Twitter blue */
 }
 
-.twitter-video-download-btn:active {
-  transform: scale(0.95);
-}
-
-.twitter-video-download-btn svg {
-  width: 20px;
-  height: 20px;
-  fill: currentColor;
-}
-
-/* Match X's button hover effects */
-.twitter-video-download-btn:hover .css-146c3p1 {
+/* Make Twitter's hover circle visible when we hover the button */
+.xplay-btn:hover .xplay-hover-circle {
   background-color: rgba(29, 155, 240, 0.1);
-  border-radius: 50%;
+}
+
+.xplay-icon {
+  fill: rgb(29, 155, 240) !important;
+  color: rgb(29, 155, 240) !important;
 }
 
 /* Notification styles */
@@ -77,15 +67,7 @@
   }
 }
 
-/* Ensure button is visible on dark theme */
-[data-theme="dark"] .twitter-video-download-btn {
-  background-color: rgba(255, 255, 255, 0.15);
-  color: rgb(231, 233, 234);
-}
-
-[data-theme="dark"] .twitter-video-download-btn:hover {
-  background-color: rgba(29, 155, 240, 0.9);
-}
+ /* No dark mode gray override, always blue */
 
 /* Mobile responsive */
 @media (max-width: 600px) {
