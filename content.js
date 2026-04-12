@@ -13,6 +13,8 @@
 
   // Cache to store video data by tweet ID
   const videoCache = new Map();
+  // Cache to store image data by tweet ID
+  const imageCache = new Map();
 
   /**
    * Inject script into page context to intercept fetch/XHR
@@ -53,11 +55,15 @@
       const tweetId = obj.rest_id;
       const legacy = obj.legacy;
 
-      // Check if this tweet has extended entities with video
+      // Check if this tweet has extended entities with media
       if (legacy.extended_entities?.media) {
         const media = legacy.extended_entities.media;
+        
+        const photos = [];
 
         for (const item of media) {
+          console.log(item.type);
+          
           if (item.type === 'video' || item.type === 'animated_gif') {
             const variants = item.video_info?.variants || [];
 
@@ -74,7 +80,24 @@
               videoCache.set(tweetId, videoQualities);
               addDownloadButton(tweetId);
             }
+          } else if (item.type === 'photo') {
+             let url = item.media_url_https;
+
+             
+             if (url) {
+                if (url.includes('format=')) {
+                  url = url.replace(/name=[^&]+/, "name=orig");
+                } else if (!url.includes('name=')) {
+                  url = url + '?name=orig';
+                }
+                photos.push(url);
+             }
           }
+        }
+        
+        if (photos.length > 0) {
+           imageCache.set(tweetId, photos);
+           addDownloadButton(tweetId);
         }
       }
     }
@@ -109,6 +132,11 @@
           const actionGroup = article.querySelector('[role="group"]');
 
           if (actionGroup && !actionGroup.querySelector('.twitter-video-download-btn')) {
+            const videoQualities = getQualityOptions(tweetId);
+            const photos = imageCache.get(tweetId) || [];
+            
+            if (videoQualities.length === 0 && photos.length === 0) return;
+
             // Create a wrapper to mimic Twitter's native action item spacing
             const itemWrapper = document.createElement('div');
             itemWrapper.className = 'css-175oi2r twitter-video-download-btn';
@@ -165,59 +193,66 @@
               z-index: 10000;
             `;
 
-            // Get quality options
-            const qualities = getQualityOptions(tweetId);
+            // Assemble button logic based on media type
+            if (videoQualities.length > 0) {
+              videoQualities.forEach(quality => {
+                const option = document.createElement('button');
+                option.textContent = quality.label;
+                option.style.cssText = `
+                  background: transparent;
+                  border: none;
+                  color: white;
+                  padding: 8px 12px;
+                  text-align: left;
+                  cursor: pointer;
+                  border-radius: 4px;
+                  font-size: 13px;
+                  transition: background 0.2s;
+                `;
 
-            qualities.forEach(quality => {
-              const option = document.createElement('button');
-              option.textContent = quality.label;
-              option.style.cssText = `
-                background: transparent;
-                border: none;
-                color: white;
-                padding: 8px 12px;
-                text-align: left;
-                cursor: pointer;
-                border-radius: 4px;
-                font-size: 13px;
-                transition: background 0.2s;
-              `;
+                option.onmouseover = () => {
+                  option.style.background = 'rgba(29, 155, 240, 0.3)';
+                };
+                option.onmouseout = () => {
+                  option.style.background = 'transparent';
+                };
 
-              option.onmouseover = () => {
-                option.style.background = 'rgba(29, 155, 240, 0.3)';
-              };
-              option.onmouseout = () => {
-                option.style.background = 'transparent';
-              };
+                option.onclick = (e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  downloadMedia(quality.url, tweetId, 'video');
+                  dropdown.style.display = 'none';
+                };
 
-              option.onclick = (e) => {
+                dropdown.appendChild(option);
+              });
+
+              // Toggle dropdown on click
+              btn.onclick = (e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                downloadVideo(quality.url, tweetId);
-                dropdown.style.display = 'none';
-              };
-
-              dropdown.appendChild(option);
-            });
-
-            // Toggle dropdown on click
-            btn.onclick = (e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              
-              if (dropdown.style.display === 'flex') {
-                dropdown.style.display = 'none';
-              } else {
-                // Close other dropdowns if any
-                document.querySelectorAll('.quality-dropdown').forEach(d => d.style.display = 'none');
                 
-                dropdown.style.display = 'flex';
-              }
-            };
+                if (dropdown.style.display === 'flex') {
+                  dropdown.style.display = 'none';
+                } else {
+                  document.querySelectorAll('.quality-dropdown').forEach(d => d.style.display = 'none');
+                  dropdown.style.display = 'flex';
+                }
+              };
+              btnContainer.appendChild(btn);
+              btnContainer.appendChild(dropdown);
+            } else if (photos.length > 0) {
+              // Direct download for photos
+              btn.onclick = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                photos.forEach((url, index) => {
+                   downloadMedia(url, tweetId + (photos.length > 1 ? `_${index + 1}` : ''), 'image');
+                });
+              };
+              btnContainer.appendChild(btn);
+            }
 
-            // Assemble button structure
-            btnContainer.appendChild(btn);
-            btnContainer.appendChild(dropdown);
             itemWrapper.appendChild(btnContainer);
 
             // Add button wrapper to action group
@@ -265,15 +300,17 @@
   }
 
   /**
-   * Trigger direct video download
-   * @param {string} url - The video URL to download
+   * Trigger direct media download
+   * @param {string} url - The URL to download
    * @param {string} tweetId - The tweet ID to use for filename
+   * @param {string} type - 'video' or 'image'
    */
-  function downloadVideo(url, tweetId) {
+  function downloadMedia(url, tweetId, type = 'video') {
     chrome.runtime.sendMessage({
-      action: 'downloadVideo',
+      action: 'downloadMedia',
       url: url,
-      tweetId: tweetId
+      tweetId: tweetId,
+      type: type
     });
     showNotification('Download started...');
   }
@@ -314,6 +351,10 @@
   const observer = new MutationObserver(() => {
     // Re-add buttons for any cached videos that might now be visible
     videoCache.forEach((_qualities, tweetId) => {
+      addDownloadButton(tweetId);
+    });
+    // Re-add buttons for any cached images that might now be visible
+    imageCache.forEach((_urls, tweetId) => {
       addDownloadButton(tweetId);
     });
   });
